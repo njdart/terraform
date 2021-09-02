@@ -16,7 +16,6 @@ import (
 	"github.com/hashicorp/terraform/internal/tfdiags"
 	"github.com/zclconf/go-cty/cty"
 
-	"github.com/hashicorp/terraform/internal/depsfile"
 	"github.com/hashicorp/terraform/internal/getproviders"
 	_ "github.com/hashicorp/terraform/internal/logging"
 )
@@ -42,20 +41,7 @@ type ContextOpts struct {
 	Parallelism  int
 	Providers    map[addrs.Provider]providers.Factory
 	Provisioners map[string]provisioners.Factory
-
-	// If non-nil, will apply as additional constraints on the provider
-	// plugins that will be requested from the provider resolver.
-	ProviderSHA256s map[string][]byte
-
-	// If non-nil, will be verified to ensure that provider requirements from
-	// configuration can be satisfied by the set of locked dependencies.
-	LockedDependencies *depsfile.Locks
-
-	// Set of providers to exclude from the requirements check process, as they
-	// are marked as in local development.
-	ProvidersInDevelopment map[addrs.Provider]struct{}
-
-	UIInput UIInput
+	UIInput      UIInput
 }
 
 // ContextMeta is metadata about the running context. This is information
@@ -88,9 +74,7 @@ type Context struct {
 	// operations.
 	meta *ContextMeta
 
-	plugins                *contextPlugins
-	dependencyLocks        *depsfile.Locks
-	providersInDevelopment map[addrs.Provider]struct{}
+	plugins *contextPlugins
 
 	hooks   []Hook
 	sh      *stopHook
@@ -99,7 +83,6 @@ type Context struct {
 	l                   sync.Mutex // Lock acquired during any task
 	parallelSem         Semaphore
 	providerInputConfig map[string]map[string]cty.Value
-	providerSHA256s     map[string][]byte
 	runCond             *sync.Cond
 	runContext          context.Context
 	runContextCancel    context.CancelFunc

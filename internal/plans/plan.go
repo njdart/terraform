@@ -33,7 +33,7 @@ type Plan struct {
 	Changes           *Changes
 	TargetAddrs       []addrs.Targetable
 	ForceReplaceAddrs []addrs.AbsResourceInstance
-	ProviderSHA256s   map[string][]byte
+	ProviderSHA256s   map[addrs.Provider][]byte
 	Backend           Backend
 
 	// PrevRunState and PriorState both describe the situation that the plan
