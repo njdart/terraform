@@ -3,7 +3,7 @@ layout: "language"
 page_title: "Backend Type: http"
 sidebar_current: "docs-backends-types-standard-http"
 description: |-
-  Terraform can store state remotely at any valid HTTP endpoint.
+    Terraform can store state remotely at any valid HTTP endpoint.
 ---
 
 # http
@@ -17,6 +17,9 @@ State will be fetched via GET, updated via POST, and purged with DELETE. The met
 When locking support is enabled it will use LOCK and UNLOCK requests providing the lock info in the body. The endpoint should
 return a 423: Locked or 409: Conflict with the holding lock info when it's already taken, 200: OK for success. Any other status
 will be considered an error. The ID of the holding lock info will be added as a query parameter to state updates requests.
+
+~> **Warning!** It is highly recommended that you supply sensitive or dynamic configuration to the HTTP backend via environment variables.
+Supplying values to the backend using either `-backend-config` or in HCL directly will result in these [values being stored in plain-text in plan files.](#configuration_cached_in_plan_files)
 
 ## Example Usage
 
@@ -45,26 +48,34 @@ data "terraform_remote_state" "foo" {
 
 The following configuration options / environment variables are supported:
 
- * `address` / `TF_HTTP_ADDRESS` - (Required) The address of the REST endpoint
- * `update_method` / `TF_HTTP_UPDATE_METHOD` - (Optional) HTTP method to use
-   when updating state. Defaults to `POST`.
- * `lock_address` / `TF_HTTP_LOCK_ADDRESS` - (Optional) The address of the lock
-   REST endpoint. Defaults to disabled.
- * `lock_method` / `TF_HTTP_LOCK_METHOD` - (Optional) The HTTP method to use
-   when locking. Defaults to `LOCK`.
- * `unlock_address` / `TF_HTTP_UNLOCK_ADDRESS` - (Optional) The address of the
-   unlock REST endpoint. Defaults to disabled.
- * `unlock_method` / `TF_HTTP_UNLOCK_METHOD` - (Optional) The HTTP method to use
-   when unlocking. Defaults to `UNLOCK`.
- * `username` / `TF_HTTP_USERNAME` - (Optional) The username for HTTP basic
-   authentication
- * `password` / `TF_HTTP_PASSWORD` - (Optional) The password for HTTP basic
-   authentication
- * `skip_cert_verification` - (Optional) Whether to skip TLS verification.
-   Defaults to `false`.
- * `retry_max` / `TF_HTTP_RETRY_MAX` – (Optional) The number of HTTP request
-   retries. Defaults to `2`.
- * `retry_wait_min` / `TF_HTTP_RETRY_WAIT_MIN` – (Optional) The minimum time in
-   seconds to wait between HTTP request attempts. Defaults to `1`.
- * `retry_wait_max` / `TF_HTTP_RETRY_WAIT_MAX` – (Optional) The maximum time in
-   seconds to wait between HTTP request attempts. Defaults to `30`.
+-   `address` / `TF_HTTP_ADDRESS` - (Required) The address of the REST endpoint
+-   `update_method` / `TF_HTTP_UPDATE_METHOD` - (Optional) HTTP method to use
+    when updating state. Defaults to `POST`.
+-   `lock_address` / `TF_HTTP_LOCK_ADDRESS` - (Optional) The address of the lock
+    REST endpoint. Defaults to disabled.
+-   `lock_method` / `TF_HTTP_LOCK_METHOD` - (Optional) The HTTP method to use
+    when locking. Defaults to `LOCK`.
+-   `unlock_address` / `TF_HTTP_UNLOCK_ADDRESS` - (Optional) The address of the
+    unlock REST endpoint. Defaults to disabled.
+-   `unlock_method` / `TF_HTTP_UNLOCK_METHOD` - (Optional) The HTTP method to use
+    when unlocking. Defaults to `UNLOCK`.
+-   `username` / `TF_HTTP_USERNAME` - (Optional) The username for HTTP basic
+    authentication
+-   `password` / `TF_HTTP_PASSWORD` - (Optional) The password for HTTP basic
+    authentication
+-   `skip_cert_verification` - (Optional) Whether to skip TLS verification.
+    Defaults to `false`.
+-   `retry_max` / `TF_HTTP_RETRY_MAX` – (Optional) The number of HTTP request
+    retries. Defaults to `2`.
+-   `retry_wait_min` / `TF_HTTP_RETRY_WAIT_MIN` – (Optional) The minimum time in
+    seconds to wait between HTTP request attempts. Defaults to `1`.
+-   `retry_wait_max` / `TF_HTTP_RETRY_WAIT_MAX` – (Optional) The maximum time in
+    seconds to wait between HTTP request attempts. Defaults to `30`.
+
+## Configuration cached in plan files
+
+Configuration passed to a backend via either `-backend-config`, or directly defined in HCL in the `backend` block, are
+stored plain-text in plan files when produced with `terraform plan -out my_plan`. This can leak sensitive credentials if
+plans are not stored securely. In addition, configuration stored in a plan file will take precedence over other
+configuration, and may cause authentication issues if credentials change between creating and applying plans (eg, in
+automated environments where credentials are scoped to the duration of a job).
